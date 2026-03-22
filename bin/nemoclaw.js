@@ -400,6 +400,9 @@ async function sandboxDestroy(sandboxName, args = []) {
 
 // ── Backup functions ─────────────────────────────────────────────
 
+/**
+ * Lists all sandbox backups with formatted output.
+ */
 function listBackups() {
   const backups = backup.listBackups();
   if (backups.length === 0) {
@@ -421,6 +424,11 @@ function listBackups() {
   }
 }
 
+/**
+ * Exports a sandbox to a backup file.
+ * @param {string} sandboxName - Name of the sandbox to export.
+ * @param {string} [outputPath] - Optional output path for the backup.
+ */
 function sandboxExport(sandboxName, outputPath) {
   const result = backup.exportSandbox(sandboxName, outputPath);
   if (!result) {
@@ -428,6 +436,11 @@ function sandboxExport(sandboxName, outputPath) {
   }
 }
 
+/**
+ * Imports a sandbox from a backup file.
+ * @param {string} backupPath - Path to the backup file.
+ * @param {string} [newName] - Optional new name for the sandbox.
+ */
 function importBackup(backupPath, newName) {
   const result = backup.importSandbox(backupPath, newName);
   if (!result) {
@@ -437,6 +450,10 @@ function importBackup(backupPath, newName) {
 
 // ── Shell Completion ─────────────────────────────────────────────
 
+/**
+ * Prints shell completion script for the specified shell.
+ * @param {string} shell - Shell type (bash, zsh, or fish).
+ */
 function printCompletion(shell) {
   if (!shell || !SHELL_TYPES.includes(shell)) {
     console.log("  Usage: nemoclaw completion <shell>");
