@@ -38,6 +38,11 @@ describe("policies", () => {
     it("returns null for nonexistent preset", () => {
       assert.equal(policies.loadPreset("nonexistent"), null);
     });
+
+    it("rejects path traversal attempts", () => {
+      assert.equal(policies.loadPreset("../../etc/passwd"), null);
+      assert.equal(policies.loadPreset("../../../etc/shadow"), null);
+    });
   });
 
   describe("getPresetEndpoints", () => {
@@ -62,6 +67,32 @@ describe("policies", () => {
         const hosts = policies.getPresetEndpoints(content);
         assert.ok(hosts.length > 0, `${p.name} has no endpoints`);
       }
+    });
+  });
+
+  describe("buildPolicySetCommand", () => {
+    it("shell-quotes sandbox name to prevent injection", () => {
+      const cmd = policies.buildPolicySetCommand("/tmp/policy.yaml", "my-assistant");
+      assert.equal(cmd, "openshell policy set --policy '/tmp/policy.yaml' --wait 'my-assistant'");
+    });
+
+    it("escapes shell metacharacters in sandbox name", () => {
+      const cmd = policies.buildPolicySetCommand("/tmp/policy.yaml", "test; whoami");
+      assert.ok(cmd.includes("'test; whoami'"), "metacharacters must be shell-quoted");
+    });
+
+    it("places --wait before the sandbox name", () => {
+      const cmd = policies.buildPolicySetCommand("/tmp/policy.yaml", "test-box");
+      const waitIdx = cmd.indexOf("--wait");
+      const nameIdx = cmd.indexOf("'test-box'");
+      assert.ok(waitIdx < nameIdx, "--wait must come before sandbox name");
+    });
+  });
+
+  describe("buildPolicyGetCommand", () => {
+    it("shell-quotes sandbox name", () => {
+      const cmd = policies.buildPolicyGetCommand("my-assistant");
+      assert.equal(cmd, "openshell policy get --full 'my-assistant' 2>/dev/null");
     });
   });
 
