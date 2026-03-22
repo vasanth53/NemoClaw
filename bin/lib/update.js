@@ -19,8 +19,9 @@ const INSTALL_SCRIPT_URL = "https://raw.githubusercontent.com/NVIDIA/NemoClaw/ma
  * @returns {boolean}
  */
 function versionGte(a, b) {
-  const aParts = a.replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
-  const bParts = b.replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
+  const normalize = (v) => v.replace(/^v/, "").split(/[-+]/)[0].split(".").map(n => parseInt(n, 10) || 0);
+  const aParts = normalize(a);
+  const bParts = normalize(b);
   for (let i = 0; i < 3; i++) {
     const ai = aParts[i] || 0;
     const bi = bParts[i] || 0;
@@ -35,12 +36,19 @@ function versionGte(a, b) {
  * @param {string} url
  * @returns {Promise<string>}
  */
-function fetchUrl(url) {
+function fetchUrl(url, redirectCount = 0) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith("https") ? https : http;
-    const req = lib.get(url, { timeout: 10000 }, (res) => {
+    const req = lib.get(url, { 
+      timeout: 10000,
+      headers: { "User-Agent": "NemoClaw" }
+    }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        fetchUrl(res.headers.location).then(resolve).catch(reject);
+        if (redirectCount >= 5) {
+          reject(new Error("Too many redirects"));
+          return;
+        }
+        fetchUrl(res.headers.location, redirectCount + 1).then(resolve).catch(reject);
         return;
       }
       if (res.statusCode !== 200) {
@@ -61,10 +69,14 @@ function fetchUrl(url) {
 
 /**
  * Get the current installed version of NemoClaw.
+ * @param {boolean} clearCache - Clear Node's require cache before reading
  * @returns {string}
  */
-function getCurrentVersion() {
+function getCurrentVersion(clearCache = false) {
   try {
+    if (clearCache) {
+      delete require.cache[require.resolve("../../package.json")];
+    }
     const pkg = require("../../package.json");
     return pkg.version || "0.0.0";
   } catch {
@@ -118,7 +130,7 @@ async function getLatestNpmVersion() {
  */
 async function checkForUpdate() {
   const cliPath = getCurrentCliPath();
-  const runningFromSource = !cliPath || cliPath.includes("node_modules/.bin");
+  const runningFromSource = !cliPath;
 
   let current = getCurrentVersion();
   if (runningFromSource && cliPath) {
@@ -187,12 +199,18 @@ async function runUpdate(opts = {}) {
   console.log("  Updating NemoClaw...");
   console.log("");
 
+  let tmpDir;
   try {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-update-"));
-    const scriptPath = path.join(tmpDir, "install.sh");
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-update-"));
 
     console.log("  Downloading installer...");
     const scriptContent = await fetchUrl(INSTALL_SCRIPT_URL);
+
+    const crypto = require("crypto");
+    const hash = crypto.createHash("sha256").update(scriptContent).digest("hex");
+    console.log(`  Script SHA256: ${hash.substring(0, 16)}...`);
+
+    const scriptPath = path.join(tmpDir, "install.sh");
     fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
 
     console.log("  Running installer...");
@@ -201,10 +219,7 @@ async function runUpdate(opts = {}) {
       cwd: tmpDir
     });
 
-    fs.unlinkSync(scriptPath);
-    fs.rmdirSync(tmpDir);
-
-    const newVersion = getCurrentVersion();
+    const newVersion = getCurrentVersion(true);
     console.log("");
     console.log(`  Successfully updated to v${newVersion}`);
     return true;
@@ -215,6 +230,12 @@ async function runUpdate(opts = {}) {
     console.error("  You can also update manually with:");
     console.error("    npm install -g nemoclaw");
     return false;
+  } finally {
+    try {
+      if (tmpDir && fs.existsSync(tmpDir)) {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+    } catch {}
   }
 }
 

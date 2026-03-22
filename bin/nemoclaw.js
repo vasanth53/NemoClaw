@@ -41,12 +41,6 @@ const GLOBAL_COMMANDS = new Set([
   "help", "--help", "-h", "--version", "-v",
 ]);
 
-const SANDBOX_ACTIONS = [
-  "connect", "status", "logs", "policy-add", "policy-list", "destroy"
-];
-
-const SHELL_TYPES = ["bash", "zsh", "fish"];
-
 const REMOTE_UNINSTALL_URL = "https://raw.githubusercontent.com/NVIDIA/NemoClaw/refs/heads/main/uninstall.sh";
 
 function resolveUninstallScript() {
@@ -435,9 +429,10 @@ function help() {
     nemoclaw stop                    Stop all services
     nemoclaw status                  Show sandbox list and service status
 
-  Update:
+  ${G}Update:${R}
     nemoclaw update                    Check for updates
     nemoclaw update --yes             Update to latest version
+    nemoclaw update --force          Bypass update availability checks
 
   Troubleshooting:
     nemoclaw debug [--quick]         Collect diagnostics for bug reports
