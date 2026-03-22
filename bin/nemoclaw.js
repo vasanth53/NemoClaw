@@ -24,6 +24,7 @@ const GLOBAL_COMMANDS = new Set([
   "onboard", "list", "deploy", "setup", "setup-spark",
   "start", "stop", "status",
   "completion",
+  "update",
   "help", "--help", "-h",
 ]);
 
@@ -366,6 +367,13 @@ complete -c nemoclaw -f -a "${SANDBOX_ACTIONS.join(" ")}" -n "test (count (comma
   }
 }
 
+// ── Self-Update ─────────────────────────────────────────────────
+
+async function update(opts) {
+  const { runUpdate } = require("./lib/update");
+  await runUpdate(opts);
+}
+
 // ── Help ─────────────────────────────────────────────────────────
 
 function help() {
@@ -399,6 +407,10 @@ function help() {
   Shell Completion:
     nemoclaw completion <shell>      Generate shell completion script
 
+  Update:
+    nemoclaw update                    Check for updates
+    nemoclaw update --yes             Update to latest version
+
   Credentials are prompted on first use, then saved securely
   in ~/.nemoclaw/credentials.json (mode 600).
 `);
@@ -427,6 +439,7 @@ const [cmd, ...args] = process.argv.slice(2);
       case "status":      showStatus(); break;
       case "list":        listSandboxes(); break;
       case "completion":  printCompletion(args[0]); break;
+      case "update":      await update({ force: args.includes("--force"), yes: args.includes("--yes") }); break;
       default:            help(); break;
     }
     return;
