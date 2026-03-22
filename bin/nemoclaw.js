@@ -398,20 +398,37 @@ async function sandboxDestroy(sandboxName, args = []) {
   console.log(`  ${G}✓${R} Sandbox '${sandboxName}' destroyed`);
 }
 
+/**
+ * Exports a sandbox to a backup file.
+ * @param {string} sandboxName - Name of the sandbox to export.
+ * @param {string} [exportPath] - Optional output path for the backup.
+ */
 function sandboxExport(sandboxName, exportPath) {
   backup.exportSandbox(sandboxName, exportPath);
 }
 
+/**
+ * Lists all sandbox backups.
+ */
 function listBackups() {
   backup.listBackups();
 }
 
+/**
+ * Imports a sandbox from a backup file.
+ * @param {string} backupPath - Path to the backup file.
+ * @param {string} [newName] - Optional new name for the sandbox.
+ */
 async function importBackup(backupPath, newName) {
   await backup.importSandbox(backupPath, newName);
 }
 
 // ── Shell Completion ─────────────────────────────────────────────
 
+/**
+ * Prints shell completion script for the specified shell.
+ * @param {string} shell - Shell type (bash, zsh, or fish).
+ */
 function printCompletion(shell) {
   if (!shell || !SHELL_TYPES.includes(shell)) {
     console.log("  Usage: nemoclaw completion <shell>");
