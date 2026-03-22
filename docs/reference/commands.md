@@ -214,3 +214,35 @@ $ nemoclaw status
 Set up NemoClaw on DGX Spark.
 This command applies cgroup v2 and Docker fixes required for Ubuntu 24.04.
 Run with `sudo` on the Spark host.
+
+### `nemoclaw update`
+
+Check for CLI updates and update to the latest version.
+The command compares the current version against the latest release from npm and GitHub.
+
+```console
+$ nemoclaw update
+```
+
+**Options:**
+
+`--yes`
+: Update to the latest version without prompting for confirmation.
+
+`--force`
+: Check for updates even if already running the latest version.
+
+**Examples:**
+
+```console
+# Check for updates
+$ nemoclaw update
+
+# Update to latest version (non-interactive)
+$ nemoclaw update --yes
+
+# Force check even if up to date
+$ nemoclaw update --force
+```
+
+**Note:** If running NemoClaw from source (cloned repository), the update command will suggest using `git pull` instead.
