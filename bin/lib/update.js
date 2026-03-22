@@ -177,13 +177,20 @@ async function runUpdate(opts = {}) {
 
   if (!yes) {
     console.log("");
-    console.log("  A new version is available!");
+    if (updateAvailable) {
+      console.log("  A new version is available!");
+    } else if (force) {
+      console.log("  Reinstalling current version (--force was provided).");
+    } else {
+      console.log("  You are running the latest version.");
+    }
     console.log("");
     if (runningFromSource) {
       console.log("  Since you're running from source, use 'git pull' to update:");
       console.log("    cd /path/to/NemoClaw && git pull");
     } else {
-      console.log("  Run 'nemoclaw update --yes' to update without prompting.");
+      const cmd = `nemoclaw update --yes${force ? " --force" : ""}`;
+      console.log(`  Run '${cmd}' to update without prompting.`);
     }
     return false;
   }

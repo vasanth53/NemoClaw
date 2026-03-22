@@ -36,7 +36,6 @@ const policies = require("./lib/policies");
 const GLOBAL_COMMANDS = new Set([
   "onboard", "list", "deploy", "setup", "setup-spark",
   "start", "stop", "status", "debug", "uninstall",
-  "completion",
   "update",
   "help", "--help", "-h", "--version", "-v",
 ]);
