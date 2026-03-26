@@ -41,6 +41,7 @@ const GLOBAL_COMMANDS = new Set([
   "onboard", "list", "deploy", "setup", "setup-spark",
   "start", "stop", "status", "debug", "uninstall",
   "backups",
+  "import",
   "completion",
   "help", "--help", "-h", "--version", "-v",
 ]);
@@ -726,7 +727,21 @@ function sandboxExport(sandboxName, exportPath) {
  * Lists all sandbox backups.
  */
 function listBackups() {
-  backup.listBackups();
+  const backups = backup.listBackups();
+  if (backups.length === 0) {
+    console.log("");
+    console.log("  No backups found.");
+    console.log("");
+    return;
+  }
+  console.log("");
+  console.log("  Backups:");
+  for (const b of backups) {
+    const sizeKb = (b.size / 1024).toFixed(1);
+    console.log(`    ${b.name} (${b.createdAt}) — ${sizeKb} KB`);
+    console.log(`      ${b.path}`);
+  }
+  console.log("");
 }
 
 /**
@@ -735,7 +750,10 @@ function listBackups() {
  * @param {string} [newName] - Optional new name for the sandbox.
  */
 async function importBackup(backupPath, newName) {
-  await backup.importSandbox(backupPath, newName);
+  const imported = await backup.importSandbox(backupPath, newName);
+  if (!imported) {
+    process.exitCode = 1;
+  }
 }
 
 // ── Shell Completion ─────────────────────────────────────────────
@@ -794,7 +812,7 @@ function printCompletion(shell) {
   # Also add sandbox names as possible first argument
   opts="$opts ${sandboxNamesStr}"
 
-  COMPREPLY=$(compgen -W '$opts' -- '$cur')
+  COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
   return 0
 }
 
@@ -815,8 +833,8 @@ _nemoclaw() {
   local -a cmd
   cmd=(\${words[1,CURRENT-1]})
 
-  # Check if first word is a sandbox name
-  if [[ " \${sandbox_names[@]} " =~ " \${cmd[1]} " ]]; then
+  # Check if first word is a sandbox name (cmd[2] is first arg, cmd[1] is command)
+  if (( \${#cmd} >= 2 )) && [[ " \${sandbox_names[@]} " =~ " \${cmd[2]} " ]]; then
     _describe 'sandbox actions' sandbox_actions
   else
     _describe 'commands' global_cmds
@@ -830,7 +848,7 @@ compdef _nemoclaw nemoclaw`);
 
 complete -c nemoclaw -f -a "${globalCmds.join(" ")} ${sandboxNamesStr}" -n "test (count (commandline -opc)) -eq 1"
 
-complete -c nemoclaw -f -a "${SANDBOX_ACTIONS.join(" ")}" -n "test (count (commandline -opc)) -ge 2; and contains (commandline -opc | head -1) ${sandboxNamesFish}"
+complete -c nemoclaw -f -a "${SANDBOX_ACTIONS.join(" ")}" -n "test (count (commandline -opc)) -ge 2; and contains -- (commandline -opc)[2] ${sandboxNamesFish}"
 `);
   }
 }
