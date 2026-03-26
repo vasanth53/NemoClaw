@@ -765,7 +765,7 @@ function printCompletion(shell) {
   }
 
   const globalCmds = Array.from(GLOBAL_COMMANDS).filter(c => !c.startsWith("-"));
-  let sandboxNames = [];
+  let sandboxNames;
   try {
     sandboxNames = registry.listSandboxes().sandboxes.map(s => s.name);
   } catch {
@@ -794,7 +794,7 @@ function printCompletion(shell) {
   # Also add sandbox names as possible first argument
   opts="$opts ${sandboxNamesStr}"
 
-  COMPREPLY=(\$(compgen -W "\$opts" -- \$cur))
+  COMPREPLY=$(compgen -W '$opts' -- '$cur')
   return 0
 }
 
